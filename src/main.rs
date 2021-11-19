@@ -25,25 +25,25 @@ payload={'uid': '10023819',
 
 // 参考: https://stackoverflow.com/questions/51044467/how-can-i-perform-parallel-asynchronous-http-get-requests-with-reqwest
 // http://patshaughnessy.net/2020/1/20/downloading-100000-files-using-async-rust
-// https://gendignoux.com/blog/2021/04/01/rust-async-streams-futures-part1.html
+// https://gendignoux.com/blog/2021/04/01/rust-async-streams-futures-part1.html  很有帮助,学到很多
 #[tokio::main]
 async fn main() -> Result<()> {
     let args: Vec<String> = env::args().collect();
+    // 数据输入文件
     let file_path = &args[1];
+    // 并发数
     let concurrency = args[2].parse::<usize>()?;
 
     let client = reqwest::Client::new();
 
-    // let file_path = "test_uid.csv";
     let input = File::open(file_path).await?;
 
     let bodies = gen_uid(input, concurrency).
-
-        // map(|line|  line.trim().to_string() ).
         map(|uid| {
             // println!("{}", uid);
-            let client = &client;
-            send_coupon(client, uid)
+            // reqwest's Client is already reference-counted
+            // clone 只会增加引用计数, 不会复制对象
+            send_coupon(client.clone(), uid)
        }).
         // buffer_unordered(4);
         // 它的 receiver 需要是 a stream of Future
@@ -76,7 +76,7 @@ fn gen_uid(file: File, concurrency: usize) -> impl Stream<Item = String> {
         buffered(concurrency)
 }
 
-async fn send_coupon(client: &Client, uid: String) -> Result<String> {
+async fn send_coupon(client: Client, uid: String) -> Result<String> {
     let mut params = HashMap::from([
         ("uid", "10023819"),
         ("activity_alias", "ba897b89a85d"),
