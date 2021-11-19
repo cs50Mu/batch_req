@@ -53,7 +53,7 @@ async fn main() -> Result<()> {
         // 这里也能设置并发
         // This is similar to StreamExt::for_each, but the futures produced by the closure are run concurrently
         .for_each_concurrent(10, |(idx, b)| async move {
-            if idx % 10 == 0 {
+            if idx % 1000 == 0 {
                 match b {
                     Ok(b) => println!("[idx: {}] Got resp: {}", idx, b),
                     Err(e) => eprintln!("[idx: {}] Got an error: {}", idx, e),
@@ -76,6 +76,7 @@ fn gen_uid(file: File, concurrency: usize) -> impl Stream<Item = String> {
         buffered(concurrency)
 }
 
+// async 函数返回的是一个 Future
 async fn send_coupon(client: Client, uid: String) -> Result<String> {
     let mut params = HashMap::from([
         ("uid", "10023819"),
